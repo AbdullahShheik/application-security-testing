@@ -335,16 +335,15 @@ curl -v -X POST \
 ## Security Level: Low
 
 **Payload:**
-
 ```sql
-1' OR '1'='1
+1' OR '1'='1' #
 ```
 
 **Result:** All user records returned from the database.
 
 ![SQL Injection Low](images/sql_injection_low.jpeg)
 
-**Why it worked:** User input is concatenated directly into the SQL query which always evaluates to true.
+**Why it worked:** User input is concatenated directly into the SQL query string forming: `SELECT * FROM users WHERE id='1' OR '1'='1' #` the `OR '1'='1'` condition always evaluates to true, returning all rows, and `#` comments out the rest of the query.
 
 ## Security Level: Medium
 
@@ -386,13 +385,11 @@ curl -X POST http://127.0.0.1:8080/vulnerabilities/sqli/ \
 1' AND 1=1 #
 ```
 
-**Result:** Page returned normally, confirming the condition is true (user ID 1 exists).
+**Result:** Page returned normally.
 
-![SQL Injection Blind Low](images/sqli_blind_low.png)
+![SQL Injection Blind Low](images/sql_blind_low.jpeg)
 
-**Why it worked:** No parameterization is used. The injected boolean condition is evaluated by the database. A true condition returns user data; a false condition (e.g., `1=2`) returns nothing — confirming blind injection is possible.
-
----
+**Why it worked:** The injected boolean condition is evaluated by the database. A true condition returns user data and a false condition (e.g., `1=2`) will return nothing which confirms blind injection is possible.
 
 ## Security Level: Medium
 
@@ -406,10 +403,9 @@ curl -X POST http://127.0.0.1:8080/vulnerabilities/sqli_blind/ \
 
 **Result:** Boolean-based blind injection confirmed via POST.
 
-![SQL Injection Blind Medium](images/sqli_blind_medium.png)
+![SQL Injection Blind Medium](images/sql_blind_medium.jpeg)
 
-**Why it worked:** Same as Low — the integer-type ID parameter is not quoted in the query, so `mysql_real_escape_string()` provides no protection against numeric injection.
-
+**Why it worked:** Same as Low.
 ---
 
 ## Security Level: High
@@ -420,13 +416,11 @@ curl -X POST http://127.0.0.1:8080/vulnerabilities/sqli_blind/ \
 1' AND 1=1#
 ```
 
-**Result:** Condition evaluated successfully; response confirms true/false inference.
+**Result:** Condition evaluated successfully.
 
-![SQL Injection Blind High](images/sqli_blind_high.png)
+![SQL Injection Blind High](images/sql_blind_injection_high.jpeg)
 
-**Why it worked:** High security uses a cookie-based input instead of a POST field, but the SQL query itself remains injectable. Manually crafting requests with the injected cookie value bypasses the interface-level obfuscation.
-
----
+**Why it worked:** High security uses a cookie-based input. Manually crafting requests with the injected cookie value bypasses.
 
 # Weak Session IDs
 
@@ -436,11 +430,9 @@ curl -X POST http://127.0.0.1:8080/vulnerabilities/sqli_blind/ \
 
 **Result:** An attacker can enumerate valid session IDs by guessing sequential values.
 
-![Weak Session IDs Low](images/session_ids_low.png)
-
-**Why it's a vulnerability:** Predictable session IDs allow session hijacking — an attacker who observes one valid session ID can trivially guess neighboring valid sessions.
-
----
+![Weak Session IDs Low](images/sessionid1.jpeg)
+![Weak Session IDs Low](images/sessionid2.jpeg)
+![Weak Session IDs Low](images/sessionid3.jpeg)se
 
 ## Security Level: Medium
 
@@ -448,41 +440,30 @@ curl -X POST http://127.0.0.1:8080/vulnerabilities/sqli_blind/ \
 
 **Result:** IDs are time-based and predictable within a narrow window.
 
-![Weak Session IDs Medium](images/session_ids_medium.png)
-
-**Why it's a vulnerability:** While less obvious than sequential integers, timestamp-based IDs have limited entropy. An attacker who knows approximately when a session was created can brute-force a small range of timestamps.
-
----
+![Weak Session IDs Medium](images/sessionid_medium1.jpeg)
+![Weak Session IDs Medium](images/sessionid_medium2.jpeg)
+![Weak Session IDs Medium](images/sessionid_medium3.jpeg)
 
 ## Security Level: High
 
-**Observation:** Session IDs appear random (MD5 hash), but the source remains deterministic (timestamp-based seed).
+**Observation:** Session IDs appear random (MD5 hash and not obvious visually).
 
-**Result:** The ID looks random but is derived from a predictable value, offering false security.
-
-![Weak Session IDs High](images/session_ids_high.png)
-
-**Why it's a vulnerability:** Hashing a predictable value (current time) does not add true randomness. A cryptographically secure random number generator (`openssl_random_pseudo_bytes`) should be used instead.
-
----
+![Weak Session IDs High](images/sessionid_high.jpeg)
 
 # XSS (DOM)
 
 ## Security Level: Low
 
 **Payload:**
-
 ```
-http://localhost:8080/vulnerabilities/xss_d/?default=<script>alert(1)</script>
+http://localhost:8080/vulnerabilities/xss_d/?default=#%3Cscript%3Ealert(1)%3C/script%3E
 ```
 
-**Result:** Alert box fired in the browser.
+**Result:** Alert box appeared in the browser.
 
-![XSS DOM Low](images/xss_dom_low.png)
+![XSS DOM Low](images/xss_dom_low.jpeg)
 
-**Why it worked:** The `default` URL parameter is read directly via JavaScript (`document.location`) and written into the DOM without sanitization using `document.write()` or `innerHTML`, causing the script tag to execute.
-
----
+**Why it worked:** The payload is placed after the `#` in the URL. The page reads `document.location` and writes the content directly into the DOM causing `<script>alert(1)</script>` to execute.
 
 ## Security Level: Medium
 
@@ -492,13 +473,11 @@ http://localhost:8080/vulnerabilities/xss_d/?default=<script>alert(1)</script>
 http://localhost:8080/vulnerabilities/xss_d/?default=<img src=x onerror=alert(1)>
 ```
 
-**Result:** Alert fired using an image error event handler.
+**Result:** Alert appeared.
 
-![XSS DOM Medium](images/xss_dom_medium.png)
+![XSS DOM Medium](images/xss_dom_medium.jpeg)
 
-**Why it worked:** Medium security blocks `<script>` tags but not other HTML tags with event handlers. An `<img>` tag with `onerror` attribute executes JavaScript when the image fails to load.
-
----
+**Why it worked:** Medium security blocks `<script>` tags but not other HTML tags like img. An `<img>` tag with `onerror` attribute executes JavaScript when the image fails to load.
 
 ## Security Level: High
 
@@ -508,13 +487,11 @@ http://localhost:8080/vulnerabilities/xss_d/?default=<img src=x onerror=alert(1)
 http://127.0.0.1:8080/vulnerabilities/xss_d/?default=English#%3Cimg%20src=x%20onerror=alert(document.cookie)%3E
 ```
 
-**Result:** Payload placed after the URL fragment (`#`) to bypass server-side filtering.
+**Result:** alert appeared.
 
-![XSS DOM High](images/xss_dom_high.png)
+![XSS DOM High](images/xss_dom_high.jpeg)
 
-**Why it worked:** High security sanitizes the `default` query parameter server-side, but content after the `#` (URL fragment) is never sent to the server — it is processed only by the browser's JavaScript. If the client-side code reads `location.hash`, the payload executes unfiltered.
-
----
+**Why it worked:** High security filters the default parameter on the server, but the part after # is only handled by the browser. If the website’s JavaScript reads this value, the malicious code can run without being filtered.
 
 # XSS (Reflected)
 
@@ -526,13 +503,11 @@ http://127.0.0.1:8080/vulnerabilities/xss_d/?default=English#%3Cimg%20src=x%20on
 http://localhost:8080/vulnerabilities/xss_r/?name=<script>alert(1)</script>
 ```
 
-**Result:** Script executed immediately upon page load.
+**Result:** Script executed.
 
-![XSS Reflected Low](images/xss_reflected_low.png)
+![XSS Reflected Low](images/xss_reflected_low.jpeg)
 
-**Why it worked:** The `name` parameter is reflected directly into the HTML response without any encoding or sanitization.
-
----
+**Why it worked:** The `name` parameter is reflected directly into the HTML response.
 
 ## Security Level: Medium
 
@@ -542,13 +517,11 @@ http://localhost:8080/vulnerabilities/xss_r/?name=<script>alert(1)</script>
 <img src=x onerror=alert(1)>
 ```
 
-**Result:** Alert triggered via image error handler.
+**Result:** Alert appeared via img.
 
-![XSS Reflected Medium](images/xss_reflected_medium.png)
+![XSS Reflected Medium](images/xss_reflected_medium.jpeg)
 
-**Why it worked:** Medium security strips `<script>` tags using a basic string replacement, but leaves other HTML tags unfiltered. Event handler attributes on arbitrary tags still execute JavaScript.
-
----
+**Why it worked:** Medium security strips `<script>` tags using a basic string replacement, but leaves other HTML tags unfiltered like img.
 
 ## Security Level: High
 
@@ -558,13 +531,11 @@ http://localhost:8080/vulnerabilities/xss_r/?name=<script>alert(1)</script>
 <img src="pwn" onerror=alert(document.cookie)>
 ```
 
-**Result:** Cookie value alerted, demonstrating session theft potential.
+**Result:** Cookie value alerted.
 
-![XSS Reflected High](images/xss_reflected_high.png)
+![XSS Reflected High](images/xss_reflected_high.jpeg)
 
-**Why it worked:** High security uses a whitelist approach for some tags but the implementation still permits certain attribute-based execution vectors. Using `alert(document.cookie)` demonstrates real-world impact beyond a simple `alert(1)`.
-
----
+**Why it worked:** High security allows only certain tags, but some attributes can still be used to execute malicious code.
 
 # XSS (Stored)
 
@@ -578,11 +549,9 @@ http://localhost:8080/vulnerabilities/xss_r/?name=<script>alert(1)</script>
 
 **Result:** Script executes for every user who views the page.
 
-![XSS Stored Low](images/xss_stored_low.png)
+![XSS Stored Low](images/xss_stored_low.jpeg)
 
-**Why it worked:** The message is stored in the database and rendered back into the page with no HTML encoding, causing persistent script execution for all visitors.
-
----
+**Why it worked:** The message is stored in the database and rendered back into the page for all visitors.
 
 ## Security Level: Medium
 
@@ -595,11 +564,9 @@ Message: <img src=x onerror=alert(1)>
 
 **Result:** Persistent XSS via image tag stored in the database.
 
-![XSS Stored Medium](images/xss_stored_medium.png)
+![XSS Stored Medium](images/xss_stored_medium.jpeg)
 
-**Why it worked:** Medium security filters `<script>` in the message field but does not sanitize HTML event handlers on other elements. The `<img onerror>` payload persists and fires for every page visitor.
-
----
+**Why it worked:** Medium security filters `<script>` in the message field but does not sanitize HTML event handlers on other elements like `<img onerror>`.
 
 ## Security Level: High
 
@@ -609,19 +576,18 @@ Message: <img src=x onerror=alert(1)>
 <body onload=alert('1')>
 ```
 
-**Result:** Persistent XSS stored and executed via the `onload` event on the `<body>` tag.
+**Result:** executed via the `onload` event on the `<body>` tag.
 
-![XSS Stored High](images/xss_stored_high.png)
+![XSS Stored High](images/xss_stored_high1.jpeg)
+![XSS Stored High](images/xss_stored_high2.jpeg)
 
 **Why it worked:** High security enforces a character limit on the name field client-side, but this restriction only exists in the browser's HTML. Modifying the DOM attribute bypasses the limit. The server does not re-validate the length or sanitize event handler attributes on `<body>`.
-
----
 
 # CSP Bypass
 
 ## Security Level: Low
 
-**Method:** The CSP policy at Low level allows scripts from external sources or `unsafe-inline`. A custom JavaScript file `csp.js` was hosted/uploaded with the content:
+**Method:** The CSP policy at Low level allows scripts from external sources. A custom JavaScript file `csp.js` was uploaded with the content:
 
 ```javascript
 alert("CSP Bypass Successful");
@@ -629,11 +595,10 @@ alert("CSP Bypass Successful");
 
 **Result:** External script executed, demonstrating the weak CSP allows untrusted sources.
 
-![CSP Bypass Low](images/csp_low.png)
+![CSP Bypass Low](images/csp_low1.jpeg)
+![CSP Bypass Low](images/csp_low2.jpeg)
 
-**Why it worked:** The Content Security Policy at low level is permissive — it allows `script-src *` or includes `unsafe-inline`, meaning any script source or inline script is permitted.
-
----
+**Why it worked:** The Content Security Policy at low level is permissive, it allows any script source.
 
 ## Security Level: Medium
 
@@ -643,13 +608,11 @@ alert("CSP Bypass Successful");
 <script nonce="TmV2ZXIgZ29pbmcgdG8gZ2l2ZSB5b3UgdXA=">alert(1)</script>
 ```
 
-**Result:** Script executed by reusing the nonce exposed in the page source.
+**Result:** Script executed.
 
-![CSP Bypass Medium](images/csp_medium.png)
+![CSP Bypass Medium](images/csp_medium.jpeg)
 
 **Why it worked:** The CSP uses a static nonce value that is hardcoded in the page source rather than being regenerated per request. Once the nonce is read from the HTML, it can be reused indefinitely in injected scripts.
-
----
 
 ## Security Level: High
 
@@ -661,11 +624,11 @@ alert("1")//
 
 **Result:** The JSONP callback executed arbitrary JavaScript.
 
-![CSP Bypass High](images/csp_high.png)
+![CSP Bypass High](images/csp_high1.jpeg)
+![CSP Bypass High](images/csp_high2.jpeg)
+![CSP Bypass High](images/csp_high3.jpeg)
 
-**Why it worked:** The page uses a JSONP endpoint (`json.php?callback=`) to load data. The CSP whitelists this same domain as a trusted script source. Since the callback parameter is reflected into the script response, it becomes a CSP-compliant script execution vector — the browser trusts it because it appears to come from a whitelisted source.
-
----
+**Why it worked:** The page uses a JSONP endpoint (`json.php?callback=`) to load data. The browser trusts this callback parameter.
 
 # JavaScript
 
@@ -681,11 +644,10 @@ Then clicked Submit.
 
 **Result:** Valid token generated client-side, form accepted.
 
-![JavaScript Low](images/javascript_low.png)
+![JavaScript Low](images/js_low.jpeg)
+![JavaScript Low](images/js_low2.jpeg)
 
-**Why it worked:** Token generation logic is fully exposed in the client-side JavaScript. Calling the function manually produces a valid token that the server accepts, as there is no server-side token validation.
-
----
+**Why it worked:** Token generation logic is fully exposed in the JavaScript. Calling the function manually produces a valid token that the server accepts.
 
 ## Security Level: Medium
 
@@ -699,11 +661,10 @@ Then clicked Submit.
 
 **Result:** Token set to the expected value, form submitted successfully.
 
-![JavaScript Medium](images/javascript_medium.png)
+![JavaScript Medium](images/js_medium_low.jpeg)
+![JavaScript Medium](images/js_medium_2.jpeg)
 
-**Why it worked:** Medium security obfuscates the JavaScript slightly but the token generation function is still present in the source. Calling the internal function directly from the console bypasses the intended user flow.
-
----
+**Why it worked:** In Medium security, the token generation function is still present in the source. Calling the internal function directly from the console bypasses the intended user flow.
 
 ## Security Level: High
 
@@ -731,11 +692,9 @@ curl -X POST "http://localhost:8080/vulnerabilities/javascript/" \
 
 **Result:** Server accepted the manually computed token.
 
-![JavaScript High](images/javascript_high.png)
+![JavaScript High](images/js_high.jpeg)
 
-**Why it worked:** High security obfuscates the token generation using a double SHA256 chain, but since this logic runs entirely in the browser, it can be reverse-engineered by reading the JavaScript source. Security controls that rely solely on client-side secrecy are fundamentally flawed.
-
----
+**Why it worked:** In High security, the token generation using a double SHA256 chain, but since this logic runs entirely in the browser, it can be reverse-engineered by reading the JavaScript source. 
 
 # Analysis & Comparison
 
@@ -757,19 +716,3 @@ curl -X POST "http://localhost:8080/vulnerabilities/javascript/" \
 | XSS Stored | `<script>` works | Tag bypass needed | Length bypass |
 | CSP Bypass | Permissive policy | Static nonce | JSONP abuse |
 | JavaScript | Exposed function | Obfuscated function | Reverse engineering |
-
-## Key Takeaways
-
-**Blacklists fail.** Every medium-level filter that blocked specific characters or tags was bypassed using alternative syntax. Whitelists (allowing only known-safe values) are far more robust.
-
-**Client-side controls are not security.** CAPTCHA step skipping, JavaScript token generation, session ID prediction, and input length limits — all of these exist only in the browser and can be trivially bypassed by any attacker with DevTools.
-
-**Parameterized queries are the only real SQL injection fix.** Both medium and high SQL injection levels were bypassed because they still used string concatenation. Prepared statements with bound parameters would have prevented all three levels.
-
-**CSP requires careful configuration.** A CSP is only as strong as its most permissive rule. Static nonces and JSONP whitelisting both undermined what appeared to be a security-conscious policy.
-
-**Defense in depth is essential.** No single control is sufficient. High security in DVWA is still intentionally vulnerable — real applications must combine input validation, output encoding, CSP, secure session management, and server-side enforcement to be resilient.
-
----
-
-> ⚠️ **Disclaimer:** All testing was performed exclusively on a local DVWA Docker container for educational purposes. No external systems were targeted. Unauthorized penetration testing is illegal and unethical.
