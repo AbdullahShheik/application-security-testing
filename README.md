@@ -818,3 +818,46 @@ Attackers could steal data, change passwords, upload malicious files, or take co
 | Weak Session IDs | **Identification and Authentication Failures** |
 | Brute Force | **Identification and Authentication Failures** |
 | JavaScript Security | **Software and Data Integrity Failures** |
+
+# Bonus
+
+## Part 1: Deploy DVWA Behind Nginx Reverse Proxy
+
+DVWA was deployed behind an Nginx reverse proxy using Docker Compose.
+
+**Result:** Both containers running successfully.
+
+![Docker Compose](images/bonus6.png)
+
+## Part 2: Implement HTTPS Using Self-Signed Certificate
+
+A self-signed SSL certificate was generated using OpenSSL and configured in Nginx to enable HTTPS on port 443.
+
+**Certificate generation:**
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout certs/dvwa.key \
+  -out certs/dvwa.crt
+```
+
+![Certificate Generation](images/bonus3.png)
+
+**Result:** Visiting `http://localhost` redirects to `https://localhost`. The browser shows a self-signed certificate warning. By clicking Advanced we proceed to dvwa.
+
+![HTTPS Warning](images/bonus4.png)
+
+![DVWA over HTTPS](images/bonus7.png)
+
+## Part 3: HTTP vs HTTPS Traffic Difference
+
+| Feature | HTTP | HTTPS |
+|---------|------|-------|
+| Port | 80 | 443 |
+| Encryption | None | TLS 1.2/1.3 |
+| Credentials visible in traffic | Yes | No |
+| Session cookies visible | Yes | No |
+| Certificate required | No | Yes |
+
+**HTTP** transmits everything in plain text. An attacker intercepting the traffic can read credentials, cookies, and all request data directly.
+
+**HTTPS** encrypts all data using TLS before transmission. An attacker intercepting the traffic sees only unreadable encrypted data.
