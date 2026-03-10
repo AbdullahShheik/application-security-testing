@@ -781,3 +781,40 @@ This is confirmed by the Apache entries in `docker logs`, the `.php` file extens
 ### How Docker Isolates the Environment
 
 The container has its own filesystem. Files inside `/var/www/html` are completely separate from the host. Neither the host nor other containers can access them unless explicitly shared via a volume mount. The container runs in its own network namespace. DVWA is only reachable on the host at `localhost:8080`.
+
+# Security Analysis
+
+## 1. Why Does SQL Injection Succeed at Low Security?
+
+Low security does not properly validate or filter user input, so malicious SQL code can be inserted into the query.
+
+## 2. What Control Prevents It at High Security?
+
+High security uses prepared statements so user input is treated only as data, not as part of the SQL command. This prevents attackers from changing the structure of the query.
+
+## 3. Does HTTPS Prevent These Attacks? Why or Why Not?
+
+No. HTTPS only encrypts communication, but it does not stop malicious input from reaching the server.
+
+## 4. What Risks Exist If This Application Is Deployed Publicly?
+
+Attackers could steal data, change passwords, upload malicious files, or take control of the server.
+
+## 5. OWASP Top 10 Mapping
+
+| Vulnerability | OWASP Top 10 Category |
+|---|---|
+| SQL Injection | **A03:2021 – Injection** |
+| SQL Injection (Blind) | **A03:2021 – Injection** |
+| Command Injection | **A03:2021 – Injection** |
+| XSS (DOM) | **A03:2021 – Injection** |
+| XSS (Reflected) | **A03:2021 – Injection** |
+| XSS (Stored) | **A03:2021 – Injection** |
+| File Inclusion | **A05:2021 – Security Misconfiguration** |
+| File Upload | **A05:2021 – Security Misconfiguration** |
+| CSP Bypass | **A05:2021 – Security Misconfiguration** |
+| CSRF | **A01:2021 – Broken Access Control** |
+| Insecure CAPTCHA | **A01:2021 – Broken Access Control** |
+| Weak Session IDs | **A07:2021 – Identification and Authentication Failures** |
+| Brute Force | **A07:2021 – Identification and Authentication Failures** |
+| JavaScript Security | **A08:2021 – Software and Data Integrity Failures** |
