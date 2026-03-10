@@ -716,3 +716,68 @@ curl -X POST "http://localhost:8080/vulnerabilities/javascript/" \
 | XSS Stored | `<script>` works | Tag bypass needed | Length bypass |
 | CSP Bypass | Permissive policy | Static nonce | JSONP abuse |
 | JavaScript | Exposed function | Obfuscated function | Reverse engineering |
+
+# Docker Inspection Tasks
+
+## `docker ps`
+```bash
+docker ps
+```
+
+**Result:** Displays all running containers with their ID, image, ports, and status.
+
+![Docker PS](images/docker_ps.png)
+
+## `docker inspect dvwa`
+```bash
+docker inspect dvwa
+```
+
+**Result:** Returns detailed JSON output containing the container's full configuration including network settings, mount points, environment variables, and runtime metadata.
+
+![Docker Inspect](images/docker_inspect.png)
+
+## `docker logs dvwa`
+```bash
+docker logs dvwa
+```
+
+**Result:** Displays all logs showing every request received by the container.
+![Docker Logs](images/docker_logs.png)
+
+## `docker exec -it dvwa /bin/bash`
+```bash
+docker exec -it dvwa /bin/bash
+```
+
+## Inside the Container: `ls /var/www/html`
+```bash
+ls /var/www/html
+```
+
+**Result:** Lists all DVWA application files, including `index.php`, `login.php`, and the `vulnerabilities/` directory..
+
+![Docker LS](images/inside_container.png)
+
+## Explanations
+
+### Where Application Files Are Stored
+
+DVWA's application files are stored at `/var/www/html` inside the container.
+
+### What Backend Technology DVWA Uses
+
+DVWA runs on a **LAMP stack**:
+
+| Component | Technology |
+|-----------|------------|
+| **L** | Linux (Debian inside the container) |
+| **A** | Apache 2 (web server) |
+| **M** | MySQL (database backend) |
+| **P** | PHP (application logic) |
+
+This is confirmed by the Apache entries in `docker logs`, the `.php` file extensions visible in `ls /var/www/html`.
+
+### How Docker Isolates the Environment
+
+The container has its own filesystem. Files inside `/var/www/html` are completely separate from the host. Neither the host nor other containers can access them unless explicitly shared via a volume mount. The container runs in its own network namespace. DVWA is only reachable on the host at `localhost:8080`.
