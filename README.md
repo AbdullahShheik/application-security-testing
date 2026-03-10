@@ -804,17 +804,17 @@ Attackers could steal data, change passwords, upload malicious files, or take co
 
 | Vulnerability | OWASP Top 10 Category |
 |---|---|
-| SQL Injection | **A03:2021 – Injection** |
-| SQL Injection (Blind) | **A03:2021 – Injection** |
-| Command Injection | **A03:2021 – Injection** |
-| XSS (DOM) | **A03:2021 – Injection** |
-| XSS (Reflected) | **A03:2021 – Injection** |
-| XSS (Stored) | **A03:2021 – Injection** |
-| File Inclusion | **A05:2021 – Security Misconfiguration** |
-| File Upload | **A05:2021 – Security Misconfiguration** |
-| CSP Bypass | **A05:2021 – Security Misconfiguration** |
-| CSRF | **A01:2021 – Broken Access Control** |
-| Insecure CAPTCHA | **A01:2021 – Broken Access Control** |
-| Weak Session IDs | **A07:2021 – Identification and Authentication Failures** |
-| Brute Force | **A07:2021 – Identification and Authentication Failures** |
-| JavaScript Security | **A08:2021 – Software and Data Integrity Failures** |
+| SQL Injection | **Injection** |
+| SQL Injection (Blind) | **Injection** |
+| Command Injection | **Injection** |
+| XSS (DOM) | **Injection** |
+| XSS (Reflected) | **Injection** |
+| XSS (Stored) | **Injection** |
+| File Inclusion | **Security Misconfiguration** |
+| File Upload | **Misconfiguration** |
+| CSP Bypass | **Security Misconfiguration** |
+| CSRF | **Broken Access Control** |
+| Insecure CAPTCHA | **Broken Access Control** |
+| Weak Session IDs | **Identification and Authentication Failures** |
+| Brute Force | **Identification and Authentication Failures** |
+| JavaScript Security | **Software and Data Integrity Failures** |
